@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sowndharya Shop Manager</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f4f8; margin: 0; padding: 15px; }
+        #login-screen { max-width: 350px; margin: 80px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        #app-content { display: none; max-width: 1100px; margin: auto; }
+        
+        h2 { color: #0277bd; text-align: center; }
+        .save-section { position: sticky; top: 10px; z-index: 1000; text-align: center; margin-bottom: 20px; }
+        .save-btn { background: #2E7D32; color: white; border: none; padding: 15px 40px; border-radius: 30px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        
+        .tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+        .tabs button { padding: 10px 15px; border: none; background: #e1f5fe; border-radius: 5px; cursor: pointer; font-weight: bold; color: #0277bd; }
+        .tabs button.active { background: #0288D1; color: white; }
+
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        th { background: #87CEEB; padding: 0; border: 1px solid #b3e5fc; }
+        td { border: 1px solid #e0e0e0; padding: 0; }
+        
+        input { width: 100%; border: none; padding: 12px; box-sizing: border-box; font-size: 14px; outline: none; text-align: center; background: transparent; }
+        th input { font-weight: bold; color: #01579b; }
+        td input { background: #ffffff; }
+        td input:focus { background: #e1f5fe; }
+
+        .controls { margin: 15px 0; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+        .controls button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; background: #0288D1; color: white; font-size: 13px; }
+        .controls button.danger { background: #d32f2f; }
+        
+        .sheet { display: none; }
+        .sheet.active { display: block; }
+    </style>
+</head>
+<body>
+
+<div id="login-screen">
+    <h3 style="margin-top:0">🔑 Shop Access</h3>
+    <input type="text" id="userid" placeholder="User ID" style="border:1px solid #ccc; margin-bottom:10px; border-radius:5px;"><br>
+    <input type="password" id="password" placeholder="Password" style="border:1px solid #ccc; margin-bottom:20px; border-radius:5px;"><br>
+    <button onclick="login()" style="width:100%; padding:12px; background:#0288D1; color:white; border:none; border-radius:5px; font-weight:bold;">Login</button>
+</div>
+
+<div id="app-content">
+    <h2>📊 Office Management System</h2>
+
+    <div class="save-section">
+        <button class="save-btn" id="saveBtn">💾 SAVE ALL DATA</button>
+    </div>
+
+    <div class="tabs">
+        <button class="active" onclick="showSheet(event, 's1')">Shop 1</button>
+        <button onclick="showSheet(event, 's2')">Shop 2</button>
+        <button onclick="showSheet(event, 's3')">Shop 3</button>
+        <button onclick="showSheet(event, 's4')">Shop 4</button>
+    </div>
+
+    <div id="s1" class="sheet active">
+        <div class="controls">
+            <button onclick="addRow('t1')">➕ Row</button><button onclick="addCol('t1')">➕ Col</button>
+            <button class="danger" onclick="delRow('t1')">🗑️ Row</button><button class="danger" onclick="delCol('t1')">🗑️ Col</button>
+        </div>
+        <table id="t1"><thead><tr><th><input value="Date"></th><th><input value="Details"></th><th><input value="Amount"></th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <div id="s2" class="sheet">
+        <div class="controls">
+            <button onclick="addRow('t2')">➕ Row</button><button onclick="addCol('t2')">➕ Col</button>
+        </div>
+        <table id="t2"><thead><tr><th><input value="Date"></th><th><input value="Details"></th><th><input value="Amount"></th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <div id="s3" class="sheet">
+        <div class="controls">
+            <button onclick="addRow('t3')">➕ Row</button><button onclick="addCol('t3')">➕ Col</button>
+        </div>
+        <table id="t3"><thead><tr><th><input value="Date"></th><th><input value="Details"></th><th><input value="Amount"></th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <div id="s4" class="sheet">
+        <div class="controls">
+            <button onclick="addRow('t4')">➕ Row</button><button onclick="addCol('t4')">➕ Col</button>
+        </div>
+        <table id="t4"><thead><tr><th><input value="Date"></th><th><input value="Details"></th><th><input value="Amount"></th></tr></thead><tbody></tbody></table>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // --- YOUR UPDATED CONFIG ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyB-qpsKLiCG4Tx8Y9jmAcl6LCKNwTj_HV4",
+      authDomain: "guruprasanth-money.firebaseapp.com",
+      projectId: "guruprasanth-money",
+      storageBucket: "guruprasanth-money.firebasestorage.app",
+      messagingSenderId: "702328378993",
+      appId: "1:702328378993:web:49b1791f919289bf4aedd0",
+      measurementId: "G-B1BN394FMR"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.login = () => {
+        const u = document.getElementById('userid').value;
+        const p = document.getElementById('password').value;
+        if(u === "admin" && p === "1234") {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-content').style.display = 'block';
+            loadData();
+        } else { alert("Login Failed!"); }
+    };
+
+    document.getElementById('saveBtn').onclick = async () => {
+        const payload = {
+            t1: packTable('t1'), t2: packTable('t2'),
+            t3: packTable('t3'), t4: packTable('t4')
+        };
+        try {
+            await setDoc(doc(db, "cloud_apps", "main_store"), payload);
+            alert("✅ All Data Saved Successfully!");
+        } catch (e) { alert("Error: " + e.message); }
+    };
+
+    function packTable(id) {
+        const t = document.getElementById(id);
+        const headers = Array.from(t.querySelectorAll('thead input')).map(i => i.value);
+        const rows = Array.from(t.querySelectorAll('tbody tr')).map(tr => {
+            let rowObj = {};
+            Array.from(tr.querySelectorAll('input')).forEach((inp, idx) => {
+                rowObj['c' + idx] = inp.value; 
+            });
+            return rowObj;
+        });
+        return { headers, rows };
+    }
+
+    async function loadData() {
+        const snap = await getDoc(doc(db, "cloud_apps", "main_store"));
+        if (snap.exists()) {
+            const d = snap.data();
+            if(d.t1) unpackTable('t1', d.t1);
+            if(d.t2) unpackTable('t2', d.t2);
+            if(d.t3) unpackTable('t3', d.t3);
+            if(d.t4) unpackTable('t4', d.t4);
+        }
+    }
+
+    function unpackTable(id, data) {
+        const t = document.getElementById(id);
+        const headRow = t.querySelector('thead tr');
+        headRow.innerHTML = "";
+        data.headers.forEach(h => {
+            const th = document.createElement('th');
+            th.innerHTML = `<input value="${h}">`;
+            headRow.appendChild(th);
+        });
+        const tbody = t.querySelector('tbody');
+        tbody.innerHTML = "";
+        data.rows.forEach(rowObj => {
+            const tr = tbody.insertRow();
+            Object.values(rowObj).forEach(val => {
+                const td = tr.insertCell();
+                td.innerHTML = `<input value="${val}">`;
+            });
+        });
+    }
+
+    window.addRow = (id) => {
+        const t = document.getElementById(id);
+        const row = t.querySelector('tbody').insertRow();
+        const cols = t.querySelector('thead tr').cells.length;
+        for(let i=0; i<cols; i++) row.insertCell().innerHTML = `<input value="">`;
+    };
+
+    window.addCol = (id) => {
+        const t = document.getElementById(id);
+        const th = document.createElement('th');
+        th.innerHTML = `<input value="New Header">`;
+        t.querySelector('thead tr').appendChild(th);
+        Array.from(t.querySelector('tbody').rows).forEach(r => r.insertCell().innerHTML = `<input value="">`);
+    };
+
+    window.delRow = (id) => {
+        const b = document.getElementById(id).querySelector('tbody');
+        if(b.rows.length > 0) b.deleteRow(-1);
+    };
+
+    window.delCol = (id) => {
+        const t = document.getElementById(id);
+        const headerRow = t.querySelector('thead tr');
+        if(headerRow.cells.length > 1) {
+            headerRow.deleteCell(-1);
+            Array.from(t.querySelector('tbody').rows).forEach(r => r.deleteCell(-1));
+        }
+    };
+
+    window.showSheet = (e, id) => {
+        document.querySelectorAll('.sheet').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        e.currentTarget.classList.add('active');
+    };
+</script>
+</body>
+</html>
